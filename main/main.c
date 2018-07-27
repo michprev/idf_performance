@@ -63,8 +63,8 @@ void app_task(void * args)
 
 void pro_task(void *args)
 {
-    const char * ssid = "test_ssid";
-    const char * password = "test1234";
+    const char * SSID = "test_ssid";
+    const char * PASSWORD = "test1234";
 
     const uint16_t UDP_PORT = 4789;
     const uint16_t TCP_PORT = 4821;
@@ -96,8 +96,8 @@ void pro_task(void *args)
     wifi_config.ap.beacon_interval = 100;
     wifi_config.ap.channel = 7;
     wifi_config.ap.max_connection = 1;
-    strcpy((char *)wifi_config.ap.ssid, ssid);
-    strcpy((char *)wifi_config.ap.password, password);
+    strcpy((char *)wifi_config.ap.ssid, SSID);
+    strcpy((char *)wifi_config.ap.password, PASSWORD);
     wifi_config.ap.ssid_hidden = 0;
     wifi_config.ap.ssid_len = 0;
 
