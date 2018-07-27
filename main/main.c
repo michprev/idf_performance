@@ -39,7 +39,6 @@ void app_task(void * args)
         if (end > start && (end - start) / 240 > 500)
         {
             printf("%d us\n", (end - start) / 240);
-            assert(0);
         }
 
         for (uint32_t i = 0; i < 10000; i++)
