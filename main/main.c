@@ -73,6 +73,10 @@ void pro_task(void *args)
     int tcp_server_fd;
     int tcp_client_fd;
 
+    struct sockaddr_in tcp_client_address;
+
+    uint32_t tcp_client_address_length;
+
     /*-------------------------------------------------------------------------------------*/
 
     tcpip_adapter_init();
@@ -131,7 +135,30 @@ void pro_task(void *args)
 
     /*-------------------------------------------------------------------------------------*/
 
-    while (true)
-        vTaskDelay(100);
+    // wait for TCP client to connect
 
+    do
+    {
+        tcp_client_fd = accept(tcp_server_fd, (struct sockaddr *) &tcp_client_address, &tcp_client_address_length);
+        vTaskDelay(10 / portTICK_RATE_MS);
+    } while (tcp_client_fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK));
+
+    assert(tcp_client_fd >= 0);
+
+    printf("[TCP] client connected\n");
+
+    /*-------------------------------------------------------------------------------------*/
+
+    while (true)
+    {
+        // in case that TCP client reconnected
+        int tmp_fd = accept(tcp_server_fd, (struct sockaddr *) &tcp_client_address, &tcp_client_address_length);
+        if (tmp_fd >= 0)
+        {
+            tcp_client_fd = tmp_fd;
+            printf("[TCP] client reconnected\n");
+        }
+
+        vTaskDelay(20 / portTICK_RATE_MS);
+    }
 }
