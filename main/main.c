@@ -116,6 +116,21 @@ void pro_task(void *args)
 
     /*-------------------------------------------------------------------------------------*/
 
+    udp_server_fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    assert(udp_server_fd >= 0);
+
+    struct sockaddr_in udp_server_address;
+    udp_server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    udp_server_address.sin_port = htons(UDP_PORT);
+    udp_server_address.sin_family = AF_INET;
+
+    assert(fcntl(udp_server_fd, F_SETFL, O_NONBLOCK) == 0);
+
+    assert(bind(udp_server_fd, (struct sockaddr *) &udp_server_address, sizeof(udp_server_address)) >= 0);
+
+    /*-------------------------------------------------------------------------------------*/
+
     while (true)
         vTaskDelay(100);
 
