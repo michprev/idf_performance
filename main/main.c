@@ -35,7 +35,7 @@ void app_main(void)
     }
 
     assert(xTaskCreatePinnedToCore(app_task, "testing task", 10000, NULL, 20, NULL, 1) == pdTRUE);
-    assert(xTaskCreatePinnedToCore(pro_task, "wifi task", 4096, NULL, 2, NULL, 0) == pdTRUE);
+    assert(xTaskCreatePinnedToCore(pro_task, "wifi task", 8192, NULL, 2, NULL, 0) == pdTRUE);
 }
 
 void app_task(void * args)
@@ -74,11 +74,16 @@ void pro_task(void *args)
     int tcp_client_fd;
 
     struct sockaddr_in tcp_client_address;
+    struct sockaddr_in udp_client_socket;
 
     uint32_t tcp_client_address_length;
+    uint32_t udp_client_socket_length;
 
     const uint16_t TCP_BUFFER_LENGTH = 1024;
     uint8_t tcp_buffer[TCP_BUFFER_LENGTH];
+
+    const uint16_t UDP_BUFFER_LENGTH = 1024;
+    uint8_t udp_buffer[UDP_BUFFER_LENGTH];
 
     /*-------------------------------------------------------------------------------------*/
 
@@ -168,6 +173,15 @@ void pro_task(void *args)
         {
             tcp_buffer[tcp_length] = '\0';
             printf("[TCP]: %s\n", tcp_buffer);
+        }
+
+        // receive UDP datagrams
+        ssize_t udp_length;
+        if ((udp_length = recvfrom(udp_server_fd, udp_buffer, UDP_BUFFER_LENGTH, 0,
+                                   (struct sockaddr *) &udp_client_socket, &udp_client_socket_length)) > 0)
+        {
+            udp_buffer[udp_length] = '\0';
+            printf("[UDP]: %s\n", udp_buffer);
         }
 
         vTaskDelay(20 / portTICK_RATE_MS);
