@@ -1,13 +1,20 @@
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <nvs_flash.h>
 #include <string.h>
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <nvs_flash.h>
+
 #include <esp_wifi.h>
 #include <esp_event_loop.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <lwip/sockets.h>
+#include <lwip/sys.h>
+#include <lwip/netdb.h>
 
 void app_task(void * args);
 void pro_task(void * args);
@@ -59,6 +66,15 @@ void pro_task(void *args)
     const char * ssid = "test_ssid";
     const char * password = "test1234";
 
+    const uint16_t UDP_PORT = 4789;
+    const uint16_t TCP_PORT = 4821;
+
+    int udp_server_fd;
+    int tcp_server_fd;
+    int tcp_client_fd;
+
+    /*-------------------------------------------------------------------------------------*/
+
     tcpip_adapter_init();
 
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
@@ -80,6 +96,25 @@ void pro_task(void *args)
 
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    /*-------------------------------------------------------------------------------------*/
+
+    tcp_server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    assert(tcp_server_fd >= 0);
+
+    struct sockaddr_in tcp_server_address;
+    tcp_server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    tcp_server_address.sin_port = htons(TCP_PORT);
+    tcp_server_address.sin_family = AF_INET;
+
+    assert(fcntl(tcp_server_fd, F_SETFL, O_NONBLOCK) == 0);
+
+    assert(bind(tcp_server_fd, (struct sockaddr *) &tcp_server_address, sizeof(tcp_server_address)) >= 0);
+
+    assert(listen(tcp_server_fd, 1) >= 0);
+
+    /*-------------------------------------------------------------------------------------*/
 
     while (true)
         vTaskDelay(100);
