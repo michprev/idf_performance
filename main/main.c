@@ -77,6 +77,9 @@ void pro_task(void *args)
 
     uint32_t tcp_client_address_length;
 
+    const uint16_t TCP_BUFFER_LENGTH = 1024;
+    uint8_t tcp_buffer[TCP_BUFFER_LENGTH];
+
     /*-------------------------------------------------------------------------------------*/
 
     tcpip_adapter_init();
@@ -157,6 +160,14 @@ void pro_task(void *args)
         {
             tcp_client_fd = tmp_fd;
             printf("[TCP] client reconnected\n");
+        }
+
+        // receive TCP packets
+        ssize_t tcp_length;
+        if ((tcp_length = recv(tcp_client_fd, tcp_buffer, TCP_BUFFER_LENGTH, MSG_DONTWAIT)) > 0)
+        {
+            tcp_buffer[tcp_length] = '\0';
+            printf("[TCP]: %s\n", tcp_buffer);
         }
 
         vTaskDelay(20 / portTICK_RATE_MS);
