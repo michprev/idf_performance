@@ -181,7 +181,7 @@ void pro_task(void *args)
                                    (struct sockaddr *) &udp_client_socket, &udp_client_socket_length)) > 0)
         {
             udp_buffer[udp_length] = '\0';
-            printf("[UDP]: %s\n", udp_buffer);
+            //printf("[UDP]: %s\n", udp_buffer);
         }
 
         vTaskDelay(20 / portTICK_RATE_MS);
