@@ -42,14 +42,14 @@ void app_task(void * args)
 {
     uint32_t start, end;
 
-    TaskStatus_t task_status[15];
-    uint32_t times[15];
+    TaskStatus_t task_status[40];
+    uint32_t times[40];
 
     while (true)
     {
-        int tasks = uxTaskGetSystemState(task_status, 15, NULL);
+        int tasks = uxTaskGetSystemState(task_status, 40, NULL);
         for (int i = 0; i < tasks; i++)
-            times[i] = task_status[i].ulRunTimeCounter;
+            times[task_status[i].xTaskNumber] = task_status[i].ulRunTimeCounter;
 
         asm volatile ("rsr.ccount %0" : "=r"(start));
 
@@ -60,15 +60,15 @@ void app_task(void * args)
 
         if (end > start && (end - start) / 240 > 500)
         {
-            int tasks = uxTaskGetSystemState(task_status, 15, NULL);
+            int tasks = uxTaskGetSystemState(task_status, 40, NULL);
+
             for (int i = 0; i < tasks; i++)
             {
-                uint32_t delta = task_status[i].ulRunTimeCounter >= times[i] ?
-                                 task_status[i].ulRunTimeCounter - times[i] :
-                                 (0xffffffffu - times[i]) + task_status[i].ulRunTimeCounter;
+                uint32_t delta = task_status[i].ulRunTimeCounter >= times[task_status[i].xTaskNumber] ?
+                                 task_status[i].ulRunTimeCounter - times[task_status[i].xTaskNumber] :
+                                 (0xffffffffu - times[task_status[i].xTaskNumber]) + task_status[i].ulRunTimeCounter;
 
-                printf("[%d][%s] %u %u %u us\n", task_status[i].xCoreID, task_status[i].pcTaskName,
-                       times[i], task_status[i].ulRunTimeCounter, delta / 240);
+                printf("[%d][%s] %u us\n", task_status[i].xCoreID, task_status[i].pcTaskName, delta / 240);
             }
 
             printf("%d us\n\n", (end - start) / 240);
