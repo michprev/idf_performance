@@ -42,8 +42,15 @@ void app_task(void * args)
 {
     uint32_t start, end;
 
+    TaskStatus_t task_status[15];
+    uint32_t times[15];
+
     while (true)
     {
+        int tasks = uxTaskGetSystemState(task_status, 15, NULL);
+        for (int i = 0; i < tasks; i++)
+            times[i] = task_status[i].ulRunTimeCounter;
+
         asm volatile ("rsr.ccount %0" : "=r"(start));
 
         for (uint32_t i = 0; i < 10000; i++)
@@ -53,7 +60,18 @@ void app_task(void * args)
 
         if (end > start && (end - start) / 240 > 500)
         {
-            printf("%d us\n", (end - start) / 240);
+            int tasks = uxTaskGetSystemState(task_status, 15, NULL);
+            for (int i = 0; i < tasks; i++)
+            {
+                uint32_t delta = task_status[i].ulRunTimeCounter >= times[i] ?
+                                 task_status[i].ulRunTimeCounter - times[i] :
+                                 (0xffffffffu - times[i]) + task_status[i].ulRunTimeCounter;
+
+                printf("[%d][%s] %u %u %u us\n", task_status[i].xCoreID, task_status[i].pcTaskName,
+                       times[i], task_status[i].ulRunTimeCounter, delta / 240);
+            }
+
+            printf("%d us\n\n", (end - start) / 240);
         }
 
         for (uint32_t i = 0; i < 10000; i++)
