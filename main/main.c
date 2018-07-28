@@ -34,7 +34,6 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
-    assert(xTaskCreatePinnedToCore(app_task, "testing task", 10000, NULL, 20, NULL, 1) == pdTRUE);
     assert(xTaskCreatePinnedToCore(pro_task, "wifi task", 8192, NULL, 2, NULL, 0) == pdTRUE);
 }
 
@@ -140,6 +139,10 @@ void pro_task(void *args)
     assert(fcntl(udp_server_fd, F_SETFL, O_NONBLOCK) == 0);
 
     assert(bind(udp_server_fd, (struct sockaddr *) &udp_server_address, sizeof(udp_server_address)) >= 0);
+
+    /*-------------------------------------------------------------------------------------*/
+
+    assert(xTaskCreatePinnedToCore(app_task, "testing task", 10000, NULL, 20, NULL, 1) == pdTRUE);
 
     /*-------------------------------------------------------------------------------------*/
 
