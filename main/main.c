@@ -16,6 +16,9 @@
 #include <lwip/sys.h>
 #include <lwip/netdb.h>
 
+#include <driver/periph_ctrl.h>
+#include <soc/timer_group_struct.h>
+
 void app_task(void * args);
 void pro_task(void * args);
 
@@ -40,15 +43,41 @@ void app_main(void)
 void app_task(void * args)
 {
     uint32_t start, end;
+    uint32_t intenable;
+
+    *((volatile uint32_t *)0x3FF00258) = 31;
+
+    asm volatile ("rsr.intenable %0" : "=r"(intenable));
+    intenable |= 1u << 31u;
+    asm volatile ("wsr.intenable %0" :: "r"(intenable));
+
+    //Configure hardware timer
+    periph_module_enable(PERIPH_TIMG0_MODULE);
+    TIMERG0.wdt_wprotect=0x50d83aa1;               //Disable write protection
+    TIMERG0.wdt_config0.sys_reset_length=7;                 //3.2uS
+    TIMERG0.wdt_config0.cpu_reset_length=7;                 //3.2uS
+    TIMERG0.wdt_config0.level_int_en=1;
+    TIMERG0.wdt_config0.edge_int_en=0;
+    TIMERG0.wdt_config0.stg0=1;          //1st stage timeout: cpu reset
+    TIMERG0.wdt_config0.stg1=0;
+    TIMERG0.wdt_config0.stg2=0;
+    TIMERG0.wdt_config0.stg3=0;
+    TIMERG0.wdt_config1.clk_prescale=80;                //Prescaler: wdt counts in ticks of 1 us
+    TIMERG0.wdt_config2=500;      //Set timeout before interrupt
 
     while (true)
     {
+        TIMERG0.wdt_config0.en=1;
+        TIMERG0.wdt_feed=1;
+
         asm volatile ("rsr.ccount %0" : "=r"(start));
 
         for (uint32_t i = 0; i < 10000; i++)
                 asm ("nop");
 
         asm volatile ("rsr.ccount %0" : "=r"(end));
+
+        TIMERG0.wdt_config0.en=0;
 
         if (end > start && (end - start) / 240 > 500)
         {
